@@ -196,7 +196,7 @@
                         <div class="slct-custom form-control py-3">
                             <i class="fa-solid fa-rocket ms-3"></i>
                             <select name="display-option" id="display-option">
-                                <option value="0" selected>Display All SpaceX Launch Data</option>
+                                <option value="0">Display All SpaceX Launch Data</option>
                                 <option value="1">Display Next Rocket Launch</option>
                                 <option value="2">Display Latest Rocket Launch</option>
                                 <option value="3">Display Past Rocket Launch</option>
@@ -243,7 +243,7 @@
             <span>Sort by : </span>
             <select name="sort-data" id="sort-data" style="font-weight: 500;">
                 <option value="asc">earliest</option>
-                <option value="1">latest</option>
+                <!-- <option value="1">latest</option> -->
             </select>
         </div>
         <div class="col-auto">
@@ -277,12 +277,24 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
     <script>
+        index();
+
         function sendData() {
             document.getElementById('paginate').value = document.getElementById('paginate-data').value;
             document.getElementById('sort-option').value = document.getElementById('sort-data').value;
             console.log(document.getElementById('paginate-data').value);
             console.log(document.getElementById('sort-data').value);
             document.getElementById('filterForm').submit();
+        }
+
+        function index() {
+            var current_display_option = <?php echo strval($_SESSION["display_option"]); ?>;
+            var current_paginate_option = <?php echo strval($_SESSION["paginate"]); ?>;
+            var display_option = document.getElementById('display-option');
+            var paginate_option = document.getElementById('paginate-data');
+
+            display_option.selectedIndex = `${current_display_option}`;
+            paginate_option.value = `${current_paginate_option}`;
         }
     </script>
 </body>

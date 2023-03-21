@@ -1,7 +1,26 @@
 <?php
     function index($paginate = null, $rocket_name = null) {
         $result = json_decode(getLatestLaunches(), true);
-        
+        htmlDataGenerator2($result);
+    }
+
+    function viewData($display_option, $paginate = null, $rocket_name = null) {
+        if ($display_option == 0) {
+            $data = json_decode(getAllLaunches(), true);
+            htmlDataGenerator1($data, $paginate);
+        } else if ($display_option == 1) {
+            $data = json_decode(getNextLaunches(), true);
+            htmlDataGenerator2($data);
+        } else if ($display_option == 2) {
+            $data = json_decode(getLatestLaunches(), true);
+            htmlDataGenerator2($data);
+        } else if ($display_option == 3) {
+            $data = json_decode(getPastLaunches(), true);
+            htmlDataGenerator1($data, $paginate);
+        } 
+    }
+
+    function htmlDataGenerator2($result) {
         $name = $result['name'];
         $status = $result['success'];
         $dateAndLocation = $result['date_local'] . ', Kennedy Space Center, California, USA';
@@ -13,25 +32,25 @@
         $weather_data = $weather['weather'][0]['description'];
         $youtube_id = 'https://www.youtube.com/embed/' . $result['links']['youtube_id'] . '?mute=1';
 
-        // check flight status
-        if ($status) {
-            $status = "<p id='rocket-status-data' class='subtitle-status mb-0'>Success</p>";
-        } else if (!$status) {
-            if (!$result['upcoming']) {
-                $status = "<p id='rocket-status-data' class='subtitle-status-failed mb-0'>Failed</p>";
+        if ($status == null && $result['upcoming'] == true) {
+            $status = "<p id='rocket-status-data' class='subtitle-status mb-0'>Upcoming</p>";
+            $weather_description = "<span id='weather-description' style='color:var(--blue-primary)'>The forcasted weather in the city of Lomboc, California are expected to be <b>{$weather_data}</b>.</span>";
+        } else {
+            if ($status) {
+                $status = "<p id='rocket-status-data' class='subtitle-status-success mb-0'>Success</p>";
+                $weather_description = "<span id='weather-description' style='color:var(--green-primary)'>The weather in the city of Lomboc, California was <b>{$weather_data}</b> and it does not seems to be causing any problems to the rocket's flight.</span>";
             } else {
-                $status = "<p id='rocket-status-data' class='subtitle-status mb-0'>Upcoming</p>";
+                $status = "<p id='rocket-status-data' class='subtitle-status-failed mb-0'>Failed</p>";
+                $weather_description = "<span id='weather-description' style='color:var(--red-primary)'>The weather condition was <b>{$weather_data}</b> and the lunch was unsuccessful, although this may need more scientific data, the weather might be one of the reason of unsuccessful launch.</span>";
             }
         }
-
-        // count reused cores
+        
         foreach ($result['cores'] as $cores) {
             if($cores['reused'] == true) {
                 $cores_reused++;
             }
         }
 
-        // check descriptions
         if (!$description) {
             $description = 'No descriptions';
         }
@@ -39,16 +58,27 @@
         echo "
             <div class='row m-4'>
             <div class='col align-self-center'>
-                <div id='carouselExampleFade' class='carousel slide carousel-fade' data-bs-ride='carousel'>
-                    <div class='carousel-inner'>
-                        <div class='carousel-item active'>
-                            <img src='images/dafault-image-2.png' class='d-block w-100'>
+                <div id='carouselExampleFade' class='carousel slide carousel-fade' data-bs-ride='carousel'>";
+                if (count($result['links']['flickr']['original']) != 0 ) {
+                    echo "<div class='carousel-inner'>";
+                    foreach ($result['links']['flickr']['original'] as $link) {
+                        echo "                            
+                            <div class='carousel-item active'>
+                                <img src='{$link}' class='d-block w-100'>
+                            </div>
+                        ";
+                    }
+                    echo "</div>";
+                } else {
+                    echo "
+                        <div class='carousel-inner'>
+                            <div class='carousel-item active'>
+                                <img src='images/default-image-4.jpg' class='d-block w-100'>
+                            </div>
                         </div>
-                        <div class='carousel-item'>
-                            <img src='images/default-image-1.png' class='d-block w-100'>
-                        </div>
-                    </div>
-                    <button class='carousel-control-prev' type='button' data-bs-target='#carouselExampleFade' data-bs-slide='prev'>
+                    ";
+                }
+        echo "      <button class='carousel-control-prev' type='button' data-bs-target='#carouselExampleFade' data-bs-slide='prev'>
                         <span class='carousel-control-prev-icon' aria-hidden='true'></span>
                         <span class='visually-hidden'>Previous</span>
                     </button>
@@ -72,27 +102,17 @@
                 </div>
     
                 <p id='flight-description'>{$description}</p>
-                <p id='weather-forecast'><i class='fa-solid fa-cloud me-2'></i><span style='font-weight: 500;'>Weather Forecast : </span>{$weather_data}</p>
-                <p id='weather-description'></p>
+                <p id='weather-forecast' class='mb-0'><i class='fa-solid fa-cloud me-2'></i><span style='font-weight: 500;'>Weather Forecast : </span>{$weather_data}</p>
+                {$weather_description}
             </div>
         </div>
         ";
     }
 
-    function viewData($status, $paginate = null, $rocket_name = null) {
-        $data = json_decode(getLatestLaunches(), true);
+    function htmlDataGenerator1($data, $paginate, $rocket_name = null) {
         $count = 0;
-        
         foreach ($data as $result) {
-            if ($paginate != null && $count < $paginate) {
-                $count ++;
-            } else if ($paginate != null && $count == $paginate) {
-                break;
-            }
-
-            if ($rocket_name != null && $rocket_name != $result['name']) {
-                continue;
-            } else if ($rocket_name != null && $rocket_name == $result['name']) {
+            if ($count < intval($paginate)) {
                 $name = $result['name'];
                 $status = $result['success'];
                 $dateAndLocation = $result['date_local'] . ', Kennedy Space Center, California, USA';
@@ -104,12 +124,20 @@
                 $weather_data = $weather['weather'][0]['description'];
                 $youtube_id = 'https://www.youtube.com/embed/' . $result['links']['youtube_id'] . '?mute=1';
 
-                if ($status) {
-                    $status = "<p id='rocket-status-data' class='subtitle-status mb-0'>Success</p>";
+                if ($status == null && $result['upcoming'] == true) {
+                    $status = "<p id='rocket-status-data' class='subtitle-status mb-0'>Upcoming</p>";
+                    $weather_description = "<span id='weather-description' style='color:var(--blue-primary)'>The forcasted weather in the city of Lomboc, California are expected to be <b>{$weather_data}</b>.</span>";
                 } else {
-                    $status = "<p id='rocket-status-data' class='subtitle-status-failed mb-0'>Failed</p>";
-                }
+                    if ($status) {
+                        $status = "<p id='rocket-status-data' class='subtitle-status-success mb-0'>Success</p>";
+                        $weather_description = "<span id='weather-description' style='color:var(--green-primary)'>The weather in the city of Lomboc, California was <b>{$weather_data}</b> and it does not seems to be causing any problems to the rocket's flight.</span>";
+                    } else {
+                        $status = "<p id='rocket-status-data' class='subtitle-status-failed mb-0'>Failed</p>";
+                        $weather_description = "<span id='weather-description' style='color:var(--red-primary)'>The weather condition was <b>{$weather_data}</b> and the lunch was unsuccessful, although this may need more scientific data, the weather might be one of the reason of unsuccessful launch.</span>";
 
+                    }
+                }
+        
                 foreach ($result['cores'] as $cores) {
                     if($cores['reused'] == true) {
                         $cores_reused++;
@@ -123,16 +151,27 @@
                 echo "
                     <div class='row m-4'>
                     <div class='col align-self-center'>
-                        <div id='carouselExampleFade' class='carousel slide carousel-fade' data-bs-ride='carousel'>
-                            <div class='carousel-inner'>
-                                <div class='carousel-item active'>
-                                    <img src='images/dafault-image-2.png' class='d-block w-100'>
+                        <div id='carouselExampleFade' class='carousel slide carousel-fade' data-bs-ride='carousel'>";
+                        if (count($result['links']['flickr']['original']) != 0 ) {
+                            echo "<div class='carousel-inner'>";
+                            foreach ($result['links']['flickr']['original'] as $link) {
+                                echo "                            
+                                    <div class='carousel-item active'>
+                                        <img src='{$link}' class='d-block w-100'>
+                                    </div>
+                                ";
+                            }
+                            echo "</div>";
+                        } else {
+                            echo "
+                                <div class='carousel-inner'>
+                                    <div class='carousel-item active'>
+                                        <img src='images/default-image-4.jpg' class='d-block w-100'>
+                                    </div>
                                 </div>
-                                <div class='carousel-item'>
-                                    <img src='images/default-image-1.png' class='d-block w-100'>
-                                </div>
-                            </div>
-                            <button class='carousel-control-prev' type='button' data-bs-target='#carouselExampleFade' data-bs-slide='prev'>
+                            ";
+                        }
+                echo "      <button class='carousel-control-prev' type='button' data-bs-target='#carouselExampleFade' data-bs-slide='prev'>
                                 <span class='carousel-control-prev-icon' aria-hidden='true'></span>
                                 <span class='visually-hidden'>Previous</span>
                             </button>
@@ -156,12 +195,14 @@
                         </div>
             
                         <p id='flight-description'>{$description}</p>
-                        <p id='weather-forecast'><i class='fa-solid fa-cloud me-2'></i><span style='font-weight: 500;'>Weather Forecast : </span>{$weather_data}</p>
-                        
+                        <p id='weather-forecast' class='mb-0'><i class='fa-solid fa-cloud me-2'></i><span style='font-weight: 500;'>Weather Forecast : </span>{$weather_data}</p>
+                        {$weather_description}
                     </div>
                 </div>
                 ";
-                }
+
+                $count ++;
+            }
         }
     }
 
@@ -173,6 +214,10 @@
         } else if ($name == 'geocoding') {
             return "http://api.openweathermap.org/geo/1.0/direct?";
         }
+    }
+
+    function getCarouselImages() {
+        
     }
 
     function getAllLaunches() {
@@ -192,8 +237,6 @@
 
         $response = curl_exec($curl);
         curl_close($curl);
-
-
 
         if ($response) {
             return $response;

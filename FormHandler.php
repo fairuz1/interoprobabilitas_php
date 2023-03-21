@@ -1,4 +1,5 @@
 <?php
+    session_start(); 
     $display_option = intval($_POST["display-option"]);
     $sort           = $_POST["sort-option"];
     $paginate       = $_POST["paginate"];
