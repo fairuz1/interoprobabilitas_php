@@ -11,12 +11,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard : Welcome!!</title>
 
+    <!-- google font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+    <!-- bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
     <script src="https://kit.fontawesome.com/e725ea6c67.js" crossorigin="anonymous"></script>
+
+    <!-- jquery ui -->
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
+    <script src="//code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
     <style>
         :root {
@@ -195,7 +202,7 @@
                         <label for="display-option" class="form-label">Display Option</label>
                         <div class="slct-custom form-control py-3">
                             <i class="fa-solid fa-rocket ms-3"></i>
-                            <select name="display-option" id="display-option">
+                            <select name="display-option" id="display-option" onchange="checkDisplayOption()">
                                 <option value="0">Display All SpaceX Launch Data</option>
                                 <option value="1">Display Next Rocket Launch</option>
                                 <option value="2">Display Latest Rocket Launch</option>
@@ -204,12 +211,29 @@
                         </div>
                     </div>
         
-                    <div class="col-3">
+                    <div class="col-3" hidden>
                         <label for="rocket-name" class="form-label">Rocket Name</label>
                         <div class="slct-custom form-control py-3">
                             <i class="fa-solid fa-magnifying-glass ms-3"></i>
                             <input type="text" name="rocket-name" id="rocket-name" class="ms-2" placeholder="CSR-20">
                         </div>
+                    </div>
+
+                    <div class="col-auto">
+                        <label for="date-start" class="form-label">Date Start</label>
+                        <div class="slct-custom form-control py-3">
+                            <i class="far fa-calendar-alt ms-3"></i>
+                            <input type="text" name="date-start" id="date-start" class="ms-2" placeholder="specify start date" onchange="checkDate()">
+                        </div>
+                    </div>
+
+                    <div class="col-auto">
+                        <label for="date-end" class="form-label">Date End</label>
+                        <div class="slct-custom form-control py-3">
+                            <i class="far fa-calendar-alt ms-3"></i>
+                            <input type="text" name="date-end" id="date-end" class="ms-2" placeholder="specify end date" onchange="checkDate()">
+                        </div>
+                        <div id="date-warning" class="form-text">Please make sure the end date are after the start date.</div>
                     </div>
 
                     <div class="col-3" hidden>
@@ -261,13 +285,15 @@
             if ($_SESSION["status"] == 'home') {
                 index(); 
             } else if ($_SESSION["status"] == 'request') {
-                viewData($_SESSION["display_option"], $_SESSION["paginate"], $_SESSION["rocket_name"]);
+                viewData($_SESSION["display_option"], $_SESSION["paginate"], $_SESSION["end_date"], $_SESSION["start_date"]);
                 $_SESSION["status"] = 'home';
             }
         } else {
             $_SESSION["status"] = 'home';
             index(); 
         }
+
+        echo $_SESSION["end_date"];
     ?>
 
     <!-- footer -->
@@ -278,6 +304,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
     <script>
         index();
+        $( "#date-start" ).datepicker({ altFormat: "yy-mm-dd" });
+        $( "#date-end" ).datepicker({ altFormat: "yy-mm-dd" });
+
+        var dateFormat = $( "#date-start" ).datepicker( "option", "dateFormat" );
+        $( "#date-start" ).datepicker( "option", "dateFormat", "yy-mm-dd" );
+
+        var dateFormat = $( "#date-end" ).datepicker( "option", "dateFormat" );
+        $( "#date-end" ).datepicker( "option", "dateFormat", "yy-mm-dd" );
 
         function sendData() {
             document.getElementById('paginate').value = document.getElementById('paginate-data').value;
@@ -295,6 +329,38 @@
 
             display_option.selectedIndex = `${current_display_option}`;
             paginate_option.value = `${current_paginate_option}`;
+        }
+
+        function checkDate() {
+            var start_date = $( "#date-start" ).datepicker('getDate');
+            var end_date = $( "#date-end" ).datepicker('getDate');
+            var submit_button = document.getElementById('submit-button');
+
+            if (start_date > end_date) {
+                submit_button.disabled = true;
+            } else {
+                submit_button.disabled = false;
+            }
+        }
+
+        function checkDisplayOption() {
+            var start_date = document.getElementById('date-start');
+            var end_date = document.getElementById('date-end');
+            var display_option = document.getElementById('display-option');
+
+            if (display_option.value == 1 || display_option.value == 2) {
+                start_date.disabled = true;
+                end_date.disabled = true;
+
+                start_date.placeholder = 'disabled';
+                end_date.placeholder = 'disabled';
+            } else {
+                start_date.disabled = false;
+                end_date.disabled = false;
+
+                start_date.placeholder = 'specify start date';
+                end_date.placeholder = 'specify end date';
+            }
         }
     </script>
 </body>
